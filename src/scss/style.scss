@@ -6,4 +6,17 @@ body {
 
 h1 {
   color: $text_color;
+  text-align: center;
+  padding: 200px 0;
+  animation: fadeIn 2s ease forwards;
+  opacity: 0;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

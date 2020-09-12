@@ -20,6 +20,7 @@ const source = require('vinyl-source-stream');
 // Style paths
 const styleSrc = 'src/scss/style.scss';
 const styleDist = './dist/css/';
+let styleWatch = 'src/scss/**/*.scss';
 
 // Js paths
 const mainJS = 'main.js';
@@ -27,6 +28,9 @@ const blogJS = 'blog.js';
 let jsFolder = 'src/js/';
 var jsDist = './dist/js/';
 let jsFiles = [mainJS, blogJS];
+let jsWatch = 'src/js/**/*.js';
+
+let htmlWatch = '**/*.html'; // Optional
 
 function style(done) {
   src(styleSrc)
@@ -69,9 +73,20 @@ function js(done) {
   done(); // calling callback
 }
 
+function gulp_watch(done) {
+  watch(styleWatch, style);
+  watch(jsWatch, js);
+
+  watch(htmlWatch); // Optional
+
+  done();
+}
+
 // Register tasks
 task('style', style); // gulp style
 
 task('js', js); // gulp js
+
+task('watch', gulp_watch);
 
 task('default', parallel(style, js)); // gulp

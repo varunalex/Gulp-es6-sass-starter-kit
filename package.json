@@ -14,16 +14,11 @@
     "url": "git+https://github.com/varunalex/Gulp-es6-sass-starter-kit.git"
   },
   "keywords": [
-    "gulp",
-    "starter",
-    "gulp",
-    "es6",
-    "sass",
-    "tutorial",
-    "gulp",
+    "gulp-starter",
+    "gulp-es6",
+    "gulp-sass",
     "browser-sync",
-    "gulp",
-    "uglify"
+    "gulp-uglify"
   ],
   "author": "Varuna E.",
   "license": "MIT",
@@ -45,5 +40,10 @@
     "gulp-uglify": "^3.0.2",
     "vinyl-buffer": "^1.0.1",
     "vinyl-source-stream": "^2.0.0"
+  },
+  "babel": {
+    "presets": [
+      "@babel/preset-env"
+    ]
   }
 }

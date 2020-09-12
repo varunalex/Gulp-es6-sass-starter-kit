@@ -17,7 +17,7 @@ function style(done) {
     .pipe(sourcemaps.init())
     .pipe(
       sass({
-        errLogToConsole: true, //
+        errLogToConsole: true,
         outputStyle: 'compressed',
       }),
     )
@@ -25,13 +25,13 @@ function style(done) {
     .pipe(
       autoprefixer({
         cascade: false,
-      }),
+      }), // browsersList available at the package.json
     )
     .pipe(rename({ suffix: '.min' })) // or extname: '.min.css'
     .pipe(sourcemaps.write('./'))
     .pipe(dest(styleDist));
 
-  done();
+  done(); // calling callback
 }
 
 // Register tasks

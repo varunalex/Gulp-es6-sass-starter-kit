@@ -12,6 +12,7 @@ const uglify = require('gulp-uglify');
 // Utils
 const rename = require('gulp-rename');
 const sourcemaps = require('gulp-sourcemaps');
+const plumber = require('gulp-plumber');
 const browserSync = require('browser-sync').create();
 const reload = browserSync.reload;
 
@@ -32,7 +33,10 @@ var jsDist = './dist/js/';
 let jsFiles = [mainJS, blogJS];
 let jsWatch = 'src/js/**/*.js';
 
-let htmlWatch = '**/*.html'; // Optional
+// Other paths.  Fell free to add images, fonts etc..
+var htmlSrc = './src/**/*.html';
+var htmlURL = './dist/';
+var htmlWatch = './src/**/*.html';
 
 function style(done) {
   src(styleSrc)
@@ -77,11 +81,24 @@ function js(done) {
   done(); // calling callback
 }
 
+/**
+ * Trigger plumbers
+ * @param {String} src_file
+ * @param {String} dest_file
+ */
+function triggerPlumber(src_file, dest_file) {
+  return src(src_file).pipe(plumber()).pipe(dest(dest_file));
+}
+
+function html() {
+  return triggerPlumber(htmlSrc, htmlURL);
+}
+
 function gulp_watch(done) {
   watch(styleWatch, style);
   watch(jsWatch, series(js, reload));
 
-  watch(htmlWatch, reload); // Optional
+  watch(htmlWatch, series(html, reload)); // Optional
 
   done();
 }
@@ -90,7 +107,7 @@ function browser_sync(done) {
   browserSync.init({
     injectChanges: true,
     server: {
-      baseDir: './',
+      baseDir: './dist/',
     },
   });
 
@@ -116,4 +133,4 @@ task('watch', gulp_watch); // gulp watch
 
 task('watch-sync', series(gulp_watch, browser_sync)); // gulp watch-sync
 
-task('default', parallel(style, js)); // gulp
+task('default', parallel(html, style, js)); // gulp

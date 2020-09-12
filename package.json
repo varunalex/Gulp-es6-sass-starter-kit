@@ -1,0 +1,31 @@
+{
+  "name": "gulp-es6-sass-starter-kit",
+  "version": "1.0.0",
+  "description": "Gulp ES6 &amp; Sass starter. What's include autoprefixer, browser-sync, uglify, sourcemaps and more...",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/varunalex/Gulp-es6-sass-starter-kit.git"
+  },
+  "keywords": [
+    "gulp",
+    "starter",
+    "gulp",
+    "es6",
+    "sass",
+    "tutorial",
+    "gulp",
+    "browser-sync",
+    "gulp",
+    "uglify"
+  ],
+  "author": "Varuna E.",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/varunalex/Gulp-es6-sass-starter-kit/issues"
+  },
+  "homepage": "https://github.com/varunalex/Gulp-es6-sass-starter-kit#readme"
+}

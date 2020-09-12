@@ -1,0 +1,9 @@
+@import './base/variables.scss';
+
+body {
+  background-color: $bg_color;
+}
+
+h1 {
+  color: $text_color;
+}

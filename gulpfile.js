@@ -12,6 +12,8 @@ const uglify = require('gulp-uglify');
 // Utils
 const rename = require('gulp-rename');
 const sourcemaps = require('gulp-sourcemaps');
+const browserSync = require('browser-sync').create();
+const reload = browserSync.reload;
 
 // Vinyl
 const buffer = require('vinyl-buffer');
@@ -49,7 +51,8 @@ function style(done) {
     )
     .pipe(rename({ suffix: '.min' })) // or extname: '.min.css'
     .pipe(sourcemaps.write('./'))
-    .pipe(dest(styleDist));
+    .pipe(dest(styleDist))
+    .pipe(browserSync.stream());
 
   done(); // calling callback
 }
@@ -67,7 +70,8 @@ function js(done) {
       .pipe(sourcemaps.init({ loadMaps: true }))
       .pipe(uglify())
       .pipe(sourcemaps.write('./'))
-      .pipe(dest(jsDist));
+      .pipe(dest(jsDist))
+      .pipe(browserSync.stream());
   });
 
   done(); // calling callback
@@ -75,9 +79,30 @@ function js(done) {
 
 function gulp_watch(done) {
   watch(styleWatch, style);
-  watch(jsWatch, js);
+  watch(jsWatch, series(js, reload));
 
-  watch(htmlWatch); // Optional
+  watch(htmlWatch, reload); // Optional
+
+  done();
+}
+
+function browser_sync(done) {
+  browserSync.init({
+    injectChanges: true,
+    server: {
+      baseDir: './',
+    },
+  });
+
+  //   browserSync.init({
+  //     open: false,
+  //     injectChanges: true,
+  //     proxy: 'http://127.0.0.1:5500',
+  //     // https: {
+  //     //   key: '/path/to/your/key.key',
+  //     //   cert: '/path/to/your/crt.crt',
+  //     // },
+  //   });
 
   done();
 }
@@ -87,6 +112,8 @@ task('style', style); // gulp style
 
 task('js', js); // gulp js
 
-task('watch', gulp_watch);
+task('watch', gulp_watch); // gulp watch
+
+task('watch-sync', series(gulp_watch, browser_sync)); // gulp watch-sync
 
 task('default', parallel(style, js)); // gulp

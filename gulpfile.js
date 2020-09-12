@@ -2,6 +2,7 @@ const { dest, parallel, series, src, task, watch } = require('gulp');
 
 // CSS
 const sass = require('gulp-sass');
+const autoprefixer = require('gulp-autoprefixer');
 
 // Utils
 const rename = require('gulp-rename');
@@ -21,6 +22,11 @@ function style(done) {
       }),
     )
     .on('error', console.error.bind(console))
+    .pipe(
+      autoprefixer({
+        cascade: false,
+      }),
+    )
     .pipe(rename({ suffix: '.min' })) // or extname: '.min.css'
     .pipe(sourcemaps.write('./'))
     .pipe(dest(styleDist));

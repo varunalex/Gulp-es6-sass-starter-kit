@@ -1,6 +1,6 @@
 class App {
   init() {
-    console.log('App initialized');
+    console.log('App initialized!');
   }
 }
 

@@ -5,16 +5,18 @@ const autoprefixer = require('gulp-autoprefixer');
 const cleanCSS = require('gulp-clean-css');
 
 // js
-const babel = require('gulp-babel');
 const babelify = require('babelify');
 const browserify = require('browserify');
 const uglify = require('gulp-uglify');
 
 // Utilities
-const concat = require('gulp-concat');
 const del = require('del');
 const rename = require('gulp-rename');
 const sourcemaps = require('gulp-sourcemaps');
+
+// Vinyl
+const buffer = require('vinyl-buffer');
+const source = require('vinyl-source-stream');
 
 let paths = {
   styles: {
@@ -25,7 +27,7 @@ let paths = {
   scripts: {
     srcFolder: 'src/js/',
     dest: './dist/js/',
-    files: ['main.js', 'blog.js'], // dest output files (filename.min.js)
+    exportFiles: ['main.js', 'blog.js'], // dest output files (filename.min.js)
     watch: 'src/js/**/*.js',
   },
 };
@@ -72,10 +74,10 @@ function styles() {
   );
 }
 
-function scripts() {
-  return paths.scripts.files.map(function (file) {
+function scripts(done) {
+  paths.scripts.exportFiles.map(function (file) {
     return browserify({
-      entries: [paths.scripts.folder + file],
+      entries: [paths.scripts.srcFolder + file],
     })
       .transform(babelify, { presets: ['@babel/preset-env'] })
       .bundle()
@@ -85,21 +87,15 @@ function scripts() {
       .pipe(sourcemaps.init({ loadMaps: true }))
       .pipe(uglify())
       .pipe(sourcemaps.write('./'))
-      .pipe(dest(paths.scripts.dest));
+      .pipe(gulp.dest(paths.scripts.dest));
     //.pipe(browserSync.stream());
   });
-  return (
-    gulp
-      .src(paths.scripts.src, { sourcemaps: true })
-      .pipe(babel())
-      .pipe(uglify())
-      // .pipe(concat('main.min.js'))
-      .pipe(gulp.dest(paths.scripts.dest))
-  );
+
+  done();
 }
 
 function watch() {
-  gulp.watch(paths.scripts.src, scripts);
+  gulp.watch(paths.scripts.watch, scripts);
   gulp.watch(paths.styles.watch, styles);
 }
 

@@ -1,70 +1,81 @@
-const { dest, parallel, series, src, task, watch } = require('gulp');
-
+const gulp = require('gulp');
 // CSS
 const sass = require('gulp-sass');
 const autoprefixer = require('gulp-autoprefixer');
+const cleanCSS = require('gulp-clean-css');
 
-// JS
+// js
+const babel = require('gulp-babel');
 const babelify = require('babelify');
 const browserify = require('browserify');
 const uglify = require('gulp-uglify');
 
-// Utils
+// Utilities
+const concat = require('gulp-concat');
+const del = require('del');
 const rename = require('gulp-rename');
 const sourcemaps = require('gulp-sourcemaps');
-const plumber = require('gulp-plumber');
-const browserSync = require('browser-sync').create();
-const reload = browserSync.reload;
 
-// Vinyl
-const buffer = require('vinyl-buffer');
-const source = require('vinyl-source-stream');
+let paths = {
+  styles: {
+    src: 'src/scss/**.scss',
+    dest: 'dist/css/',
+    watch: 'src/scss/**/*.scss',
+  },
+  scripts: {
+    srcFolder: 'src/js/',
+    dest: './dist/js/',
+    files: ['main.js', 'blog.js'], // dest output files (filename.min.js)
+    watch: 'src/js/**/*.js',
+  },
+};
 
-// Style paths
-const styleSrc = 'src/scss/style.scss';
-const styleDist = './dist/css/';
-let styleWatch = 'src/scss/**/*.scss';
-
-// Js paths
-const mainJS = 'main.js';
-const blogJS = 'blog.js';
-let jsFolder = 'src/js/';
-var jsDist = './dist/js/';
-let jsFiles = [mainJS, blogJS];
-let jsWatch = 'src/js/**/*.js';
-
-// Other paths.  Fell free to add images, fonts etc..
-var htmlSrc = './src/**/*.html';
-var htmlURL = './dist/';
-var htmlWatch = './src/**/*.html';
-
-function style(done) {
-  src(styleSrc)
-    .pipe(sourcemaps.init())
-    .pipe(
-      sass({
-        errLogToConsole: true,
-        outputStyle: 'compressed',
-      }),
-    )
-    .on('error', console.error.bind(console))
-    .pipe(
-      autoprefixer({
-        cascade: false,
-      }), // browsersList available at the package.json
-    )
-    .pipe(rename({ suffix: '.min' })) // or extname: '.min.css'
-    .pipe(sourcemaps.write('./'))
-    .pipe(dest(styleDist))
-    .pipe(browserSync.stream());
-
-  done(); // calling callback
+/* Not all tasks need to use streams, a gulpfile is just another node program
+ * and you can use all packages available on npm, but it must return either a
+ * Promise, a Stream or take a callback and call it
+ */
+function clean() {
+  // You can use multiple globbing patterns as you would with `gulp.src`,
+  // for example if you are using del 2.0 or above, return its promise
+  return del(['dist/css', 'dist/js']);
 }
 
-function js(done) {
-  jsFiles.map(function (file) {
+/*
+ * Define our tasks using plain functions
+ */
+function styles() {
+  return (
+    gulp
+      .src(paths.styles.src)
+      .pipe(sourcemaps.init())
+      .pipe(
+        sass({
+          errLogToConsole: true,
+          outputStyle: 'compressed',
+        }),
+      )
+      .pipe(cleanCSS())
+      // pass in options to the stream
+      .on('error', console.error.bind(console))
+      .pipe(
+        autoprefixer({
+          cascade: false,
+        }), // browsersList available at the package.json
+      )
+      .pipe(
+        rename({
+          suffix: '.min',
+        }),
+      )
+      .pipe(sourcemaps.write('./'))
+      .pipe(gulp.dest(paths.styles.dest))
+  );
+}
+
+function scripts() {
+  return paths.scripts.files.map(function (file) {
     return browserify({
-      entries: [jsFolder + file],
+      entries: [paths.scripts.folder + file],
     })
       .transform(babelify, { presets: ['@babel/preset-env'] })
       .bundle()
@@ -74,63 +85,38 @@ function js(done) {
       .pipe(sourcemaps.init({ loadMaps: true }))
       .pipe(uglify())
       .pipe(sourcemaps.write('./'))
-      .pipe(dest(jsDist))
-      .pipe(browserSync.stream());
+      .pipe(dest(paths.scripts.dest));
+    //.pipe(browserSync.stream());
   });
-
-  done(); // calling callback
+  return (
+    gulp
+      .src(paths.scripts.src, { sourcemaps: true })
+      .pipe(babel())
+      .pipe(uglify())
+      // .pipe(concat('main.min.js'))
+      .pipe(gulp.dest(paths.scripts.dest))
+  );
 }
 
-/**
- * Trigger plumbers
- * @param {String} src_file
- * @param {String} dest_file
+function watch() {
+  gulp.watch(paths.scripts.src, scripts);
+  gulp.watch(paths.styles.watch, styles);
+}
+
+/*
+ * Specify if tasks run in series or parallel using `gulp.series` and `gulp.parallel`
  */
-function triggerPlumber(src_file, dest_file) {
-  return src(src_file).pipe(plumber()).pipe(dest(dest_file));
-}
+var build = gulp.series(clean, gulp.parallel(styles, scripts));
 
-function html() {
-  return triggerPlumber(htmlSrc, htmlURL);
-}
-
-function gulp_watch(done) {
-  watch(styleWatch, style);
-  watch(jsWatch, series(js, reload));
-
-  watch(htmlWatch, series(html, reload)); // Optional
-
-  done();
-}
-
-function browser_sync(done) {
-  browserSync.init({
-    injectChanges: true,
-    server: {
-      baseDir: './dist/',
-    },
-  });
-
-  //   browserSync.init({
-  //     open: false,
-  //     injectChanges: true,
-  //     proxy: 'http://127.0.0.1:5500',
-  //     // https: {
-  //     //   key: '/path/to/your/key.key',
-  //     //   cert: '/path/to/your/crt.crt',
-  //     // },
-  //   });
-
-  done();
-}
-
-// Register tasks
-task('style', style); // gulp style
-
-task('js', js); // gulp js
-
-task('watch', gulp_watch); // gulp watch
-
-task('watch-sync', series(gulp_watch, browser_sync)); // gulp watch-sync
-
-task('default', parallel(html, style, js)); // gulp
+/*
+ * You can use CommonJS `exports` module notation to declare tasks
+ */
+exports.clean = clean;
+exports.styles = styles;
+exports.scripts = scripts;
+exports.watch = watch;
+exports.build = build;
+/*
+ * Define default task that can be called by just running `gulp` from cli
+ */
+exports.default = build;

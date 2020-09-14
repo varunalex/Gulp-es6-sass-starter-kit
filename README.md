@@ -9,15 +9,21 @@ Gulp ES6 & Sass starter. What's include autoprefixer, browser-sync, uglify, sour
     npm install -g gulp
 
 2] Clone the repo
+
 3] Install dependencies `npm install`
 
 ## Usage
 
 **Build** - `gulp build`
+
 **Clean** - `gulp clean`
+
 **Build CSS** - `gulp styles`
+
 **Build Js** - `gulp scripts`
+
 **Watch** - `gulp watch`
+
 **Watch and sync with browser** - `gulp watch-browser`
 
 - `browserSync`option of the `gulpfile.js` file must be `true`

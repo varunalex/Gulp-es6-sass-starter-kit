@@ -11,6 +11,7 @@ const uglify = require('gulp-uglify');
 
 // Utilities
 const del = require('del');
+const plumber = require('gulp-plumber');
 const rename = require('gulp-rename');
 const sourcemaps = require('gulp-sourcemaps');
 
@@ -29,6 +30,11 @@ let paths = {
     dest: './dist/js/',
     exportFiles: ['main.js', 'blog.js'], // dest output files (filename.min.js)
     watch: 'src/js/**/*.js',
+  },
+  html: {
+    src: 'src/**/*html',
+    dest: 'dist/',
+    watch: 'src/**/*html',
   },
 };
 
@@ -94,15 +100,31 @@ function scripts(done) {
   done();
 }
 
+/**
+ * Trigger plumbers
+ * @param {String} src_file
+ * @param {String} dest_file
+ */
+function triggerPlumber(src_file, dest_file) {
+  return gulp.src(src_file).pipe(plumber()).pipe(gulp.dest(dest_file));
+}
+
+function html() {
+  return triggerPlumber(paths.html.src, paths.html.dest);
+}
+
 function watch() {
   gulp.watch(paths.scripts.watch, scripts);
   gulp.watch(paths.styles.watch, styles);
+
+  // Optional - just used to update changes
+  gulp.watch(paths.html.watch, html);
 }
 
 /*
  * Specify if tasks run in series or parallel using `gulp.series` and `gulp.parallel`
  */
-var build = gulp.series(clean, gulp.parallel(styles, scripts));
+const build = gulp.series(clean, gulp.parallel(styles, scripts, html));
 
 /*
  * You can use CommonJS `exports` module notation to declare tasks

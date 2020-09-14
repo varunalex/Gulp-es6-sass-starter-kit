@@ -10,14 +10,21 @@ const browserify = require('browserify');
 const uglify = require('gulp-uglify');
 
 // Utilities
+const browserSync = require('browser-sync').create();
 const del = require('del');
-const plumber = require('gulp-plumber');
+var gulpif = require('gulp-if');
 const rename = require('gulp-rename');
 const sourcemaps = require('gulp-sourcemaps');
+
+const reload = browserSync.reload;
 
 // Vinyl
 const buffer = require('vinyl-buffer');
 const source = require('vinyl-source-stream');
+
+const options = {
+  browserSync: true,
+};
 
 let paths = {
   styles: {
@@ -31,11 +38,6 @@ let paths = {
     exportFiles: ['main.js', 'blog.js'], // dest output files (filename.min.js)
     watch: 'src/js/**/*.js',
   },
-  html: {
-    src: 'src/**/*html',
-    dest: 'dist/',
-    watch: 'src/**/*html',
-  },
 };
 
 /* Not all tasks need to use streams, a gulpfile is just another node program
@@ -45,7 +47,7 @@ let paths = {
 function clean() {
   // You can use multiple globbing patterns as you would with `gulp.src`,
   // for example if you are using del 2.0 or above, return its promise
-  return del(['dist/css', 'dist/js']);
+  return del(['dist']);
 }
 
 /*
@@ -77,6 +79,7 @@ function styles() {
       )
       .pipe(sourcemaps.write('./'))
       .pipe(gulp.dest(paths.styles.dest))
+      .pipe(gulpif(options.browserSync, browserSync.stream()))
   );
 }
 
@@ -93,38 +96,59 @@ function scripts(done) {
       .pipe(sourcemaps.init({ loadMaps: true }))
       .pipe(uglify())
       .pipe(sourcemaps.write('./'))
-      .pipe(gulp.dest(paths.scripts.dest));
-    //.pipe(browserSync.stream());
+      .pipe(gulp.dest(paths.scripts.dest))
+      .pipe(gulpif(options.browserSync, browserSync.stream()));
   });
 
   done();
 }
 
+function browser_sync(done) {
+  browserSync.init({
+    injectChanges: true,
+    server: {
+      baseDir: './dist/',
+    },
+  });
+  done();
+}
+
 /**
- * Trigger plumbers
- * @param {String} src_file
- * @param {String} dest_file
+ * Specify SSL certificate key and crt files if you are using https dev server/proxy
  */
-function triggerPlumber(src_file, dest_file) {
-  return gulp.src(src_file).pipe(plumber()).pipe(gulp.dest(dest_file));
+function proxy_sync(done) {
+  browserSync.init({
+    open: false,
+    injectChanges: true,
+    proxy: 'http://127.0.0.1:5500',
+    // https: {
+    //   key: '/path/to/your/key.key',
+    //   cert: '/path/to/your/crt.crt',
+    // },
+  });
+  done();
 }
 
-function html() {
-  return triggerPlumber(paths.html.src, paths.html.dest);
-}
-
-function watch() {
+function watch(done) {
   gulp.watch(paths.scripts.watch, scripts);
+  // Use reload if you want to disable injectChanges option.
   gulp.watch(paths.styles.watch, styles);
 
-  // Optional - just used to update changes
-  gulp.watch(paths.html.watch, html);
+  done();
+}
+
+function watchNsync(done) {
+  gulp.watch(paths.scripts.watch, gulp.series(scripts, reload));
+  // Use reload if you want to disable injectChanges option.
+  gulp.watch(paths.styles.watch, styles);
+
+  done();
 }
 
 /*
  * Specify if tasks run in series or parallel using `gulp.series` and `gulp.parallel`
  */
-const build = gulp.series(clean, gulp.parallel(styles, scripts, html));
+const build = gulp.series(clean, gulp.parallel(styles, scripts));
 
 /*
  * You can use CommonJS `exports` module notation to declare tasks
@@ -133,6 +157,8 @@ exports.clean = clean;
 exports.styles = styles;
 exports.scripts = scripts;
 exports.watch = watch;
+exports['watch-browser'] = gulp.series(watchNsync, browser_sync);
+exports['watch-proxy'] = gulp.series(watchNsync, proxy_sync);
 exports.build = build;
 /*
  * Define default task that can be called by just running `gulp` from cli
